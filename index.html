@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>作息回正 · Good Night Sleep Tight</title>
+<meta name="description" content="每天調 15 分鐘，漸進把作息拉回 23:00 睡、08:00 起。不用註冊，資料只存在你的裝置。">
+<meta property="og:title" content="作息回正 · Good Night Sleep Tight">
+<meta property="og:description" content="每天調 15 分鐘，漸進把作息拉回 23:00 睡、08:00 起。不用註冊，資料只存在你的裝置。">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#3A46A0">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>
+/* Layout: one narrow app column; a 24-hour dial anchors "tonight", everything else is a quiet card below it. */
+:root {
+  --bg: #F2F3F7;
+  --surface: #FFFFFF;
+  --ink: #1B1F33;
+  --muted: #565D7A;
+  --line: #DADDE8;
+  --night: #3A46A0;
+  --night-soft: #E4E7F7;
+  --dawn: #A9520F;
+  --dawn-soft: #FBE7D4;
+  --ok: #24704F;
+  --ok-soft: #DDF1E7;
+  --warn: #7A4E0C;
+  --warn-soft: #FAEBCB;
+  --miss: #A83434;
+  --miss-soft: #F8E0E0;
+  --font-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-time: "IBM Plex Mono", ui-monospace, "Consolas", monospace;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1121; --surface: #171B31; --ink: #E7E9F4; --muted: #A2A8C4; --line: #2A3052;
+    --night: #8E9AF2; --night-soft: #242B55; --dawn: #F2A562; --dawn-soft: #3B2A1C;
+    --ok: #63C99B; --ok-soft: #173327; --warn: #E6B652; --warn-soft: #362A12; --miss: #EF8A8A; --miss-soft: #3A1C22;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1121; --surface: #171B31; --ink: #E7E9F4; --muted: #A2A8C4; --line: #2A3052;
+  --night: #8E9AF2; --night-soft: #242B55; --dawn: #F2A562; --dawn-soft: #3B2A1C;
+  --ok: #63C99B; --ok-soft: #173327; --warn: #E6B652; --warn-soft: #362A12; --miss: #EF8A8A; --miss-soft: #3A1C22;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+.app { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.3; }
+h1 { font-size: 1.6rem; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 0.86rem; }
+.time { font-family: var(--font-time); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; white-space: nowrap; }
+.eyebrow { font-size: 0.75rem; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; }
+.nowrap { white-space: nowrap; }
+.sr { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); padding-block: 12px 8px;
+  display: grid; gap: 10px;
+}
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand h1 { font-size: 1.3rem; }
+.brand .goal { font-size: 0.85rem; color: var(--muted); }
+nav.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+nav.tabs button {
+  font: inherit; font-size: 0.92rem; border: 0; background: transparent; color: var(--muted);
+  padding: 8px 4px; border-radius: 9px; cursor: pointer; min-height: 40px;
+}
+nav.tabs button[aria-selected="true"] { background: var(--night); color: var(--surface); font-weight: 500; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible, [tabindex="-1"]:focus-visible { outline: 2px solid var(--dawn); outline-offset: 2px; }
+label.choice:focus-within, label.tl:focus-within { outline: 2px solid var(--dawn); outline-offset: 2px; }
+
+#backupCard { scroll-margin-top: 120px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+
+.btn {
+  font: inherit; font-weight: 500; border-radius: 10px; padding: 10px 16px; cursor: pointer; min-height: 44px;
+  border: 1px solid var(--night); background: var(--night); color: var(--surface);
+}
+.btn.ghost { background: transparent; color: var(--night); }
+.btn.quiet { background: transparent; color: var(--muted); border-color: var(--line); }
+.btn.danger { background: transparent; color: var(--miss); border-color: var(--miss); }
+.btn:disabled { opacity: .45; cursor: default; }
+.linkish { font: inherit; background: none; border: 0; color: var(--night); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 4px 2px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.between { justify-content: space-between; }
+
+/* Next-up countdown */
+.next { display: flex; gap: 4px 14px; align-items: baseline; flex-wrap: wrap; background: var(--night); color: var(--surface); border-radius: var(--r); padding: 14px 18px; }
+.next .label { font-size: 0.8rem; opacity: .85; letter-spacing: .06em; }
+.next b { font-family: var(--font-display); font-size: 1.15rem; }
+.next .in { font-family: var(--font-time); font-variant-numeric: tabular-nums; margin-left: auto; font-weight: 600; }
+
+/* Hero: tonight */
+.tonight { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 18px; align-items: center; }
+@media (max-width: 520px) { .tonight { grid-template-columns: 1fr; } .dial-wrap { justify-self: center; } }
+.big-times { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.big-times .t { display: grid; gap: 2px; }
+.big-times .t b { font-family: var(--font-time); font-size: 2.3rem; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.big-times .bed b { color: var(--night); }
+.big-times .wake b { color: var(--dawn); }
+.meter { height: 8px; background: var(--night-soft); border-radius: 99px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--night), var(--dawn)); border-radius: 99px; }
+.dial-wrap { width: 180px; max-width: 100%; }
+.dial-wrap svg { width: 100%; height: auto; display: block; }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 3px 10px; border-radius: 99px; font-weight: 500; white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.hold { background: var(--warn-soft); color: var(--warn); }
+.pill.miss { background: var(--miss-soft); color: var(--miss); }
+.pill.info { background: var(--night-soft); color: var(--night); }
+
+/* Timeline: the whole row is the checkbox's label */
+ol.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+ol.timeline li { border-top: 1px solid var(--line); }
+ol.timeline li:first-child { border-top: 0; }
+label.tl { display: grid; grid-template-columns: 24px 58px minmax(0, 1fr); gap: 10px; align-items: start; padding: 11px 8px; margin-inline: -8px; border-radius: 10px; cursor: pointer; }
+label.tl input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--night); }
+label.tl .when { font-family: var(--font-time); font-variant-numeric: tabular-nums; font-weight: 600; }
+label.tl .when.am { color: var(--dawn); }
+label.tl .when.pm { color: var(--night); }
+label.tl .what b { font-weight: 500; }
+li.done label.tl .what { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+li.is-next label.tl { background: var(--night-soft); }
+
+/* Forms */
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label, .field .lbl { font-size: 0.86rem; color: var(--muted); }
+input[type="time"], textarea {
+  font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 10px; width: 100%; min-width: 0;
+}
+input[type="time"] { font-family: var(--font-time); font-size: 1.1rem; min-height: 48px; }
+/* Phones that show 上午/下午 need the room, or the minutes get cut off. */
+@media (max-width: 420px) { input[type="time"] { font-size: 0.95rem; padding-inline: 8px; letter-spacing: -0.02em; } }
+textarea { font-family: var(--font-time); font-size: 0.8rem; min-height: 80px; resize: vertical; }
+
+.choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.choices button, label.choice {
+  font: inherit; text-align: center; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink); cursor: pointer; min-height: 52px;
+  display: grid; align-content: center; gap: 1px; line-height: 1.35;
+}
+.choices button[aria-pressed="true"], label.choice:has(input:checked) { border-color: var(--night); background: var(--night-soft); box-shadow: inset 0 0 0 1px var(--night); }
+.choices button:disabled { opacity: .4; cursor: default; }
+label.choice small { color: var(--muted); font-size: 0.78rem; }
+.paces label.choice { text-align: left; padding: 10px 12px; }
+@media (max-width: 520px) { .paces { grid-template-columns: 1fr; } }
+.choices button.miss[aria-pressed="true"] { border-color: var(--miss); background: var(--miss-soft); box-shadow: inset 0 0 0 1px var(--miss); }
+
+.notice { border-radius: 12px; padding: 12px 14px; font-size: 0.92rem; display: grid; gap: 8px; }
+.notice.ok { background: var(--ok-soft); }
+.notice.hold { background: var(--warn-soft); }
+.notice.miss { background: var(--miss-soft); }
+.notice.info { background: var(--night-soft); }
+
+details.more { border-top: 1px solid var(--line); padding-top: 12px; }
+details.more > summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary .edit { color: var(--night); text-decoration: underline; text-underline-offset: 3px; }
+details.more[open] > summary { margin-bottom: 12px; }
+details.more .inner { display: grid; gap: 12px; }
+
+/* Tables & charts */
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 500; color: var(--muted); font-size: 0.8rem; letter-spacing: .05em; }
+td.time { font-weight: 600; }
+tr.current td { background: var(--night-soft); }
+tr.past td { color: var(--muted); }
+.chart svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { display: grid; gap: 2px; }
+.stat b { font-family: var(--font-time); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+
+.guide { display: grid; gap: 14px; }
+.guide article { display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+.guide article:first-child { border-top: 0; padding-top: 0; }
+.guide p { max-width: 62ch; }
+
+.hero-welcome { display: grid; gap: 10px; padding-top: 6px; }
+.hero-welcome h1 { font-size: 1.65rem; }
+.hero-welcome ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+
+.trophy { border: 1px solid var(--dawn); background: linear-gradient(160deg, var(--night-soft), var(--dawn-soft)); }
+.trophy .big { font-family: var(--font-display); font-size: 1.6rem; line-height: 1.35; }
+.trophy .big .time { color: var(--night); }
+
+.confirm { display: grid; gap: 10px; border: 1px solid var(--miss); border-radius: 12px; padding: 12px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .meter i { transition: width .5s ease; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">
+      <h1>作息回正</h1>
+      <span class="goal" id="goalLine">目標 <span class="time">23:00</span> 睡 · <span class="time">08:00</span> 起</span>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs" aria-label="頁面" hidden>
+      <button role="tab" id="tab-today" data-view="today" aria-controls="main">今天</button>
+      <button role="tab" id="tab-plan" data-view="plan" aria-controls="main">計畫</button>
+      <button role="tab" id="tab-log" data-view="log" aria-controls="main">紀錄</button>
+      <button role="tab" id="tab-guide" data-view="guide" aria-controls="main">原理</button>
+    </nav>
+  </header>
+  <main id="main" role="tabpanel"></main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const KEY = "sleepshift.v3";
+  const PACES = {
+    gentle:   { step: 15, days: 2, label: "溫和", desc: "每 2 天調 15 分鐘" },
+    standard: { step: 15, days: 1, label: "標準", desc: "每天調 15 分鐘（推薦）" },
+    fast:     { step: 30, days: 1, label: "積極", desc: "每天調 30 分鐘" }
+  };
+  const WAKE_OPTS = [["ontime", "準時", "前後 15 分內"], ["late15", "晚一點", "晚 15–30 分"], ["late", "晚很多", "超過 30 分"]];
+  const SLEEP_OPTS = [["fast", "很快睡著", "30 分內"], ["slow", "躺很久", "超過 30 分"], ["off", "比較晚上床", "晚於計畫"]];
+  const RESULT = { ok: ["ok", "前進"], hold: ["hold", "原地"], miss: ["miss", "原地 · 起晚了"] };
+
+  let storageOK = true;
+  let S = null;   // loaded just before the first render, once every helper exists
+  let view = "today";
+  let editing = false, confirmReset = false, confirmRestore = null;
+  let flash = null, undo = null;
+  let draft = { wake: null, sleep: null }, lastPick = 0, renderedAt = 0;
+  let ticker = null, undoTimer = null, pendingSubmit = null;
+
+  /* ---------- storage ---------- */
+  function load() {
+    try { const raw = localStorage.getItem(KEY); const d = raw ? JSON.parse(raw) : null; return valid(d) ? d : null; }
+    catch (e) { storageOK = false; return null; }
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { storageOK = false; } }
+  const isMin = x => typeof x === "number" && isFinite(x) && x >= 0 && x < 2880;
+  const isPos = p => p && isMin(p.bed) && isMin(p.wake);
+  function valid(d) {
+    if (!d || d.v !== 3 || !PACES[d.pace] || !isPos(d.tgt) || !isPos(d.origin) || !isPos(d.pos)) return false;
+    if (!/^\d{4}-\d\d-\d\d$/.test(d.startDay) || typeof d.logs !== "object" || !d.logs) return false;
+    return Object.entries(d.logs).every(([k, e]) => /^\d{4}-\d\d-\d\d$/.test(k) && e && RESULT[e.result] && isMin(e.planBed));
+  }
+
+  /* ---------- time helpers ---------- */
+  const toMin = s => { const [h, m] = String(s).split(":").map(Number); return ((h * 60 + m) % 1440 + 1440) % 1440; };
+  // Bedtimes before 15:00 count as "after midnight", so 02:00 sorts after 23:00.
+  const normBed = m => (m < 900 ? m + 1440 : m);
+  const fmt = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
+  const dur = m => { m = Math.round(Math.abs(m)); const h = Math.floor(m / 60), r = m % 60; if (!h) return `${r} 分`; return r ? `${h} 小時 ${r} 分` : `${h} 小時`; };
+  const durShort = m => { m = Math.round(Math.abs(m)); const h = Math.floor(m / 60), r = m % 60; return h ? (r ? `${h}h${r}m` : `${h}h`) : `${r}m`; };
+  const dateKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const addDays = (key, n) => { const [y, mo, d] = key.split("-").map(Number); return dateKey(new Date(y, mo - 1, d + n)); };
+  const daysBetween = (a, b) => { const [y1, m1, d1] = a.split("-").map(Number), [y2, m2, d2] = b.split("-").map(Number); return Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / 864e5); };
+  const shortDate = key => { const [, m, d] = key.split("-").map(Number); return `${m}/${d}`; };
+  const WEEK = ["日", "一", "二", "三", "四", "五", "六"];
+  const weekday = key => { const [y, m, d] = key.split("-").map(Number); return WEEK[new Date(y, m - 1, d).getDay()]; };
+  const inBed = p => p.wake + 1440 - p.bed;
+
+  /* ---------- position model ----------
+     origin: where the person started. pos: tonight's bed / tomorrow's wake. tgt: the goal.
+     Advancing moves pos toward tgt by one step; stepping back moves it toward origin. */
+  const toward = (x, t, d) => x + Math.sign(t - x) * Math.min(Math.abs(t - x), d);
+  const stepOf = () => PACES[S.pace].step;
+  const gap = (a, b) => Math.max(Math.abs(a.bed - b.bed), Math.abs(a.wake - b.wake));
+  function stagesFor(origin, tgt, step) { return Math.ceil(gap(origin, tgt) / step); }
+  function stage() {
+    const total = stagesFor(S.origin, S.tgt, stepOf()), left = stagesFor(S.pos, S.tgt, stepOf());
+    return { cur: Math.max(1, total - left + 1), of: total + 1, left, done: left === 0 };
+  }
+  function pct() { const g = gap(S.origin, S.tgt); return g ? Math.round((1 - gap(S.pos, S.tgt) / g) * 100) : 100; }
+  const delaying = () => S.tgt.bed > S.pos.bed;
+  function advance() { const s = stepOf(); S.pos = { bed: toward(S.pos.bed, S.tgt.bed, s), wake: toward(S.pos.wake, S.tgt.wake, s) }; }
+  function retreat(n) { const s = stepOf() * n; S.pos = { bed: toward(S.pos.bed, S.origin.bed, s), wake: toward(S.pos.wake, S.origin.wake, s) }; }
+
+  /* ---------- the "sleep day" ----------
+     A day starts 3 hours before the planned wake time (clamped to 04:00–07:00),
+     so someone still up at 00:30 is still in "tonight", not "tomorrow". */
+  function nowInfo() {
+    const d = new Date();
+    const m = d.getHours() * 60 + d.getMinutes();
+    const cut = Math.min(420, Math.max(240, (S ? S.pos.wake : 480) - 180));
+    const before = m < cut;
+    const day = before ? dateKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1)) : dateKey(d);
+    return { day, rel: before ? m + 1440 : m, evening: before || m >= 17 * 60 };
+  }
+
+  /* ---------- rendering ---------- */
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function render() {
+    if (ticker) { clearInterval(ticker); ticker = null; }
+    const main = $("#main"), tabs = $("#tabs");
+    try {
+      if (S) $("#goalLine").innerHTML = `目標 <span class="time">${fmt(S.tgt.bed)}</span> 睡 · <span class="time">${fmt(S.tgt.wake)}</span> 起`;
+      if (!S || view === "setup") {
+        tabs.hidden = !S;
+        tabs.querySelectorAll("button").forEach(b => { b.setAttribute("aria-selected", "false"); b.tabIndex = -1; });
+        main.innerHTML = `<div class="view" style="display:grid;gap:16px">${renderSetup()}</div>`;
+        bindSetup();
+      } else {
+        tabs.hidden = false;
+        tabs.querySelectorAll("button").forEach(b => { const on = b.dataset.view === view; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; });
+        main.setAttribute("aria-labelledby", "tab-" + view);
+        const fn = { today: renderToday, plan: renderPlan, log: renderLog, guide: renderGuide }[view] || renderToday;
+        main.innerHTML = `<div class="view" style="display:grid;gap:16px">${fn()}</div>`;
+        bindView();
+      }
+    } catch (err) {
+      main.innerHTML = `<section class="card"><h2>頁面出了點問題</h2><p class="muted">儲存的資料可能損壞了。清除後可以重新開始。</p><div><button class="btn danger" id="hardReset" type="button">清除資料並重新開始</button></div></section>`;
+      $("#hardReset").addEventListener("click", () => { try { localStorage.removeItem(KEY); } catch (e) {} S = null; view = "today"; render(); });
+    }
+    renderedAt = performance.now();
+    const f = $("#flash"); if (f) f.focus({ preventScroll: true });
+  }
+
+  /* ----- setup ----- */
+  function paceRadios(name, current) {
+    return `<div class="choices paces" role="radiogroup" aria-label="調整速度">${Object.entries(PACES).map(([k, p]) => `
+      <label class="choice"><input class="sr" type="radio" name="${name}" id="${name}-${k}" value="${k}" ${current === k ? "checked" : ""}>
+        <b>${p.label}</b><small>${p.desc}</small></label>`).join("")}</div>`;
+  }
+
+  function restoreBlock() {
+    const pending = confirmRestore ? `
+      <div class="confirm">
+        <p>還原會覆蓋這台裝置上目前的計畫和紀錄（備份裡有 ${Object.keys(confirmRestore.logs).length} 天紀錄）。</p>
+        <div class="row"><button class="btn danger" id="doRestore" type="button">覆蓋並還原</button><button class="btn quiet" id="noRestore" type="button">取消</button></div>
+      </div>` : "";
+    return `
+      <details class="more" ${confirmRestore ? "open" : ""}>
+        <summary><span class="edit">從舊手機搬過來？貼上備份碼</span></summary>
+        <div class="inner">
+          <textarea id="backupIn" placeholder="貼上在舊裝置「紀錄」頁複製的備份碼" aria-label="備份碼"></textarea>
+          <div class="row"><button class="btn ghost" id="restore" type="button">還原</button><span class="small muted" id="restoreMsg" role="status"></span></div>
+          ${pending}
+        </div>
+      </details>`;
+  }
+
+  function renderSetup() {
+    const first = !S;
+    const v = first ? { curBed: "", curWake: "", tgtBed: "23:00", tgtWake: "08:00", pace: "standard" }
+                    : { curBed: fmt(S.pos.bed), curWake: fmt(S.pos.wake), tgtBed: fmt(S.tgt.bed), tgtWake: fmt(S.tgt.wake), pace: S.pace };
+    const intro = first ? `
+      <section class="hero-welcome">
+        <span class="eyebrow">朋友傳給你的作息調整工具</span>
+        <h1>每天調一點點，把作息拉回 <span class="nowrap">23:00 睡</span>、<span class="nowrap">08:00 起</span></h1>
+        <ul class="muted">
+          <li>上床和起床一小步一小步往前移，身體才跟得上。</li>
+          <li>每天告訴你何時曬太陽、何時停咖啡、何時調暗燈光。</li>
+          <li>每天早上點兩下回報，沒跟上就停在原地，不會硬推。</li>
+        </ul>
+        <p class="small muted">不用註冊。資料只存在你這台裝置的瀏覽器裡，傳連結給你的朋友看不到你的資料。</p>
+      </section>` : `<section class="hero-welcome"><h1>修改計畫</h1><p class="muted">已帶入你目前的時間。改完會從這裡繼續，過去的紀錄會保留。</p></section>`;
+    return `${intro}
+      <form class="card" id="setupForm" novalidate>
+        <h2>${first ? "你最近一週通常…" : "目前的時間"}</h2>
+        <div class="fields">
+          <div class="field"><label for="curBed">${first ? "幾點上床關燈" : "上床"}</label><input type="time" id="curBed" value="${esc(v.curBed)}" required></div>
+          <div class="field"><label for="curWake">${first ? "幾點起床" : "起床"}</label><input type="time" id="curWake" value="${esc(v.curWake)}" required></div>
+        </div>
+        <div class="notice info" id="preview" role="status"></div>
+        <details class="more" id="advanced" ${first ? "" : "open"}>
+          <summary><span id="advSummary"></span><span class="edit">修改</span></summary>
+          <div class="inner">
+            <div class="fields">
+              <div class="field"><label for="tgtBed">目標上床</label><input type="time" id="tgtBed" value="${esc(v.tgtBed)}"></div>
+              <div class="field"><label for="tgtWake">目標起床</label><input type="time" id="tgtWake" value="${esc(v.tgtWake)}"></div>
+            </div>
+            ${paceRadios("pace", v.pace)}
+          </div>
+        </details>
+        <div class="row">
+          <button class="btn" type="submit" id="setupSubmit">${first ? "開始我的計畫" : "儲存並繼續"}</button>
+          ${first ? "" : `<button class="btn quiet" type="button" id="cancelSetup">取消</button>`}
+        </div>
+        ${first ? restoreBlock() : ""}
+      </form>
+      ${first ? `<p class="small muted">這是一般性的睡眠衛教工具，不能取代醫療診斷。若長期失眠、打鼾或白天嚴重嗜睡，請諮詢醫師。</p>` : ""}`;
+  }
+  function readSetupForm() {
+    const f = $("#setupForm");
+    const sel = f.querySelector('input[name="pace"]:checked');
+    return { curBed: $("#curBed", f).value, curWake: $("#curWake", f).value,
+             tgtBed: $("#tgtBed", f).value || "23:00", tgtWake: $("#tgtWake", f).value || "08:00",
+             pace: sel ? sel.value : "standard" };
+  }
+  function unusual(s) {
+    const raw = toMin(s.curBed);
+    return raw >= 300 && raw < 1080;
+  }
+  function updatePreview() {
+    const s = readSetupForm();
+    $("#advSummary").innerHTML = `目標 <span class="time">${s.tgtBed}</span> 睡 · <span class="time">${s.tgtWake}</span> 起 · ${PACES[s.pace].label}速度`;
+    const box = $("#preview"), btn = $("#setupSubmit");
+    if (!s.curBed || !s.curWake) {
+      box.innerHTML = `填好上面兩個時間，就會算出要幾天。<span class="muted">例如平常 02:00 睡、10:30 起，用標準速度大約 12 天會到 23:00 / 08:00。</span>`;
+      btn.disabled = true; return;
+    }
+    btn.disabled = false;
+    const p = PACES[s.pace];
+    const from = { bed: normBed(toMin(s.curBed)), wake: toMin(s.curWake) }, to = { bed: normBed(toMin(s.tgtBed)), wake: toMin(s.tgtWake) };
+    const steps = stagesFor(from, to, p.step), days = steps * p.days;
+    const word = (c, t) => t === c ? "不用動" : `要${t < c ? "提早" : "延後"} <b class="time">${dur(t - c)}</b>`;
+    const parts = [];
+    if (!steps) parts.push(`<span>你的作息已經在目標上了，接下來的重點是每天維持。</span>`);
+    else parts.push(`<span>上床${word(from.bed, to.bed)}，起床${word(from.wake, to.wake)}。照${p.label}速度，約 <b>${days} 天</b>（${shortDate(addDays(nowInfo().day, days))} 左右）到達目標。</span>`);
+    // A likely AM/PM mix-up on 12-hour phones comes first; don't jump to medical advice for a typo.
+    const odd = inBed(from) > 840 || inBed(from) < 240 || inBed(to) > 840 || inBed(to) < 240;
+    if (odd || unusual(s)) {
+      parts.unshift(`<span><b>請確認上午／下午有沒有選對。</b>現在算出來在床 <b class="time">${dur(inBed(from))}</b>，${odd ? "看起來不太對" : "上床時間落在白天"}。</span>`);
+    }
+    if (inBed(to) > 510 && inBed(to) <= 840) parts.push(`<span class="small">目標在床 ${dur(inBed(to))}，比多數人需要的長。把 <span class="time">${s.tgtBed}</span> 當成「最早」上床時間：沒睡意就晚點上床，起床時間不變。</span>`);
+    if (!odd && unusual(s)) parts.push(`<span class="small"><b>提醒：</b>白天才睡常跟輪班有關；仍在輪班的話，這個計畫不適合你。</span>`);
+    else if (!odd && days > 28) parts.push(`<span class="small"><b>提醒：</b>落差這麼大，有可能是「睡眠相位${to.bed > from.bed ? "前移" : "後移"}症候群」。建議先跟睡眠專科討論，並選溫和速度。</span>`);
+    box.innerHTML = parts.join("");
+  }
+  function bindSetup() {
+    const f = $("#setupForm");
+    f.addEventListener("input", updatePreview);
+    f.addEventListener("change", updatePreview);
+    updatePreview();
+    f.addEventListener("submit", e => {
+      e.preventDefault();
+      const s = readSetupForm();
+      if (!s.curBed || !s.curWake) return;
+      const day = nowInfo().day;
+      const pos = { bed: normBed(toMin(s.curBed)), wake: toMin(s.curWake) };
+      const tgt = { bed: normBed(toMin(s.tgtBed)), wake: toMin(s.tgtWake) };
+      if (S) {
+        // Keep the original starting point unless the new times are even further from the goal.
+        const origin = gap(pos, tgt) > gap(S.origin, tgt) ? pos : S.origin;
+        Object.assign(S, { pos, tgt, pace: s.pace, origin, progress: 0 });
+        if (gap(pos, tgt) > 0) S.reachedDay = null;
+        // Editing today's report later must start from the new settings, not the old position.
+        if (S.logs[day]) S.logs[day].before = { pos: { ...S.pos }, progress: 0, reachedDay: S.reachedDay, trophyDismissed: S.trophyDismissed };
+        flash = { kind: "info", text: "計畫已更新，從目前的時間繼續。" };
+      } else {
+        S = { v: 3, pace: s.pace, tgt, origin: pos, pos, progress: 0, startDay: day, logs: {}, ticks: {}, snaps: {},
+              reachedDay: null, trophyDismissed: false, stepBackDay: null, lastBackupDay: day, welcomeDismissed: null };
+        flash = { kind: "info", text: "計畫建立好了。第一晚照你平常的時間睡就好，明天早上起床後回來點兩下回報。" };
+      }
+      save(); view = "today"; render(); window.scrollTo(0, 0);
+    });
+    const c = $("#cancelSetup"); if (c) c.addEventListener("click", () => { view = "today"; render(); });
+    bindRestore();
+  }
+
+  /* ----- today ----- */
+  function dialSVG(p, t) {
+    const C = 90, R = 66, Rt = 80;
+    const ang = m => ((m % 1440) / 1440) * 2 * Math.PI - Math.PI / 2;
+    const pt = (m, r) => [C + r * Math.cos(ang(m)), C + r * Math.sin(ang(m))];
+    const arc = (a, b, r) => {
+      const span = ((b - a) % 1440 + 1440) % 1440;
+      const [x1, y1] = pt(a, r), [x2, y2] = pt(b, r);
+      return `M${x1.toFixed(1)} ${y1.toFixed(1)} A${r} ${r} 0 ${span > 720 ? 1 : 0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+    };
+    const nums = [0, 6, 12, 18].map(h => { const [x, y] = pt(h * 60, 46); return `<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${h}</text>`; }).join("");
+    const minor = Array.from({ length: 24 }, (_, h) => { const [x1, y1] = pt(h * 60, 56), [x2, y2] = pt(h * 60, h % 6 ? 59 : 61); return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="var(--line)" stroke-width="1.5"/>`; }).join("");
+    return `<svg viewBox="0 0 180 180" role="img" aria-label="24 小時圖：今晚 ${fmt(p.bed)} 到 ${fmt(p.wake)}，目標 ${fmt(t.bed)} 到 ${fmt(t.wake)}">
+      <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="var(--night-soft)" stroke-width="14"/>
+      ${minor}
+      <path d="${arc(t.bed, t.wake, Rt)}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="3 4" stroke-linecap="round"/>
+      <path d="${arc(p.bed, p.wake, R)}" fill="none" stroke="var(--night)" stroke-width="14" stroke-linecap="round"/>
+      <path d="${arc(p.wake, p.wake + 30, R)}" fill="none" stroke="var(--dawn)" stroke-width="14" stroke-linecap="round"/>
+      ${nums}
+      <text x="${C}" y="${C - 2}" text-anchor="middle" font-size="18" font-weight="600" fill="var(--ink)" font-family="IBM Plex Mono, monospace">${durShort(inBed(p))}</text>
+      <text x="${C}" y="${C + 16}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Noto Sans TC, sans-serif">在床時間</text>
+    </svg>`;
+  }
+
+  // Morning items use the wake time this sleep-day started with; evening items use tonight's plan.
+  function scheduleFor(morningWake, bed) {
+    const later = delaying();
+    const light = later
+      ? [{ id: "light", t: morningWake + 10, am: true, title: "早上避開強光 2 小時", note: "要往後調時，早上的光會把時鐘往前拉。待室內、出門戴墨鏡。" },
+         { id: "dusk", t: bed - 300, am: false, title: "傍晚到戶外曬光 30 分鐘", note: "傍晚的光幫時鐘往後撥。" }]
+      : [{ id: "light", t: morningWake + 10, am: true, title: "曬太陽 20–30 分鐘", note: "最好到戶外，陰天也有效；隔著窗戶效果差很多。這是把時鐘往前撥最強的訊號。" }];
+    const done = stage().done;
+    return [
+      { id: "wake", t: morningWake, am: true, title: "起床，下床", note: (done ? "就算昨晚很晚才睡著，也照時間起。週末最多晚 1 小時。" : "就算昨晚很晚才睡著，也照時間起。調整期間週末也一樣。") + "睡不夠的日子白天會比較睏，想睡就不要開車或騎車。" },
+      ...light,
+      { id: "breakfast", t: morningWake + 45, am: true, title: "吃早餐", note: "固定的早餐時間也幫生理時鐘對時。" },
+      { id: "caffeine", t: bed - 480, am: false, title: "咖啡因、小睡的截止時間", note: "之後別喝咖啡、茶、能量飲。想小睡要在這之前，20 分鐘內。" },
+      { id: "exercise", t: bed - 180, am: false, title: "運動、大餐在這之前結束", note: "睡前 3 小時內避免劇烈運動和吃太飽。" },
+      { id: "dim", t: bed - 120, am: false, title: "調暗燈光", note: "開暖色小燈，手機開夜間模式、亮度調低。" },
+      { id: "winddown", t: bed - 45, am: false, title: "放下手機，開始放鬆", note: "洗澡、伸展、看紙本書。" },
+      { id: "bed", t: bed, am: false, title: "最早上床時間", note: "有睡意才上床。躺 20 分鐘睡不著就離開床，有睡意再回來。" }
+    ].sort((a, b) => a.t - b.t);
+  }
+
+  function snapFor(day) {
+    if (!S.snaps[day]) {
+      S.snaps[day] = { wake: S.pos.wake };
+      Object.keys(S.snaps).sort().slice(0, -14).forEach(k => delete S.snaps[k]);
+      save();
+    }
+    return S.snaps[day];
+  }
+
+  function untilText(m) { return m < 60 ? `還有 ${Math.max(1, Math.round(m))} 分` : `還有 ${dur(m)}`; }
+  function nextUp(items, rel) {
+    const nx = items.find(it => it.t > rel);
+    if (!nx) return { html: `<div class="next" id="nextBox"><span class="label">現在</span><b>有睡意就上床</b><span class="in">躺 20 分鐘睡不著就起來</span></div>`, id: null };
+    return { html: `<div class="next" id="nextBox"><span class="label">下一件事 · <span class="time">${fmt(nx.t)}</span></span><b>${nx.title}</b><span class="in">${untilText(nx.t - rel)}</span></div>`, id: nx.id };
+  }
+
+  // Consecutive days (ending yesterday or today) whose entries satisfy pred.
+  function runOf(pred, stopAt) {
+    const day = nowInfo().day;
+    const keys = Object.keys(S.logs).sort().reverse();
+    if (!keys.length || daysBetween(keys[0], day) > 1) return 0;
+    let n = 0, prev = null;
+    for (const k of keys) {
+      if (stopAt && k <= stopAt) break;
+      if (prev && daysBetween(k, prev) !== 1) break;
+      if (!pred(S.logs[k])) break;
+      n++; prev = k;
+    }
+    return n;
+  }
+
+  function renderToday() {
+    const now = nowInfo(), day = now.day;
+    const snap = snapFor(day);
+    const st = stage();
+    const isStart = day === S.startDay;
+    const log = S.logs[day];
+    const needCheckin = !isStart && (!log || editing);
+    const ticks = S.ticks[day] || {};
+    const dayN = Math.max(1, daysBetween(S.startDay, day) + 1);
+    const fl = flash; flash = null;
+    const logKeys = Object.keys(S.logs).sort();
+    const parts = [];
+
+    if (!storageOK) parts.push(`<div class="notice hold">這個瀏覽器不允許儲存資料（可能是無痕模式），關掉頁面後紀錄會消失。請用一般模式開啟。</div>`);
+    if (fl) {
+      const showUndo = undo && Date.now() < undo.until;
+      parts.push(`<div class="notice ${fl.kind}" id="flash" tabindex="-1" role="status"><span>${fl.text}</span>${showUndo ? `<div><button class="btn quiet" id="undoBtn" type="button">復原（<span id="undoSec">${Math.ceil((undo.until - Date.now()) / 1000)}</span>）</button></div>` : ""}</div>`);
+    }
+
+    // Welcome back after a gap of 3+ days: suggest stepping back first.
+    const last = logKeys[logKeys.length - 1] || S.startDay;
+    const away = daysBetween(last, day);
+    if (!log && !isStart && away >= 3 && S.welcomeDismissed !== day) {
+      const n = away >= 7 ? 2 : 1;
+      const canBack = gap(S.pos, S.origin) > 0;
+      parts.push(`<section class="notice info"><b>歡迎回來！已經 ${away} 天沒回報了。</b><span>中斷很正常。停了幾天，身體通常會往回彈一點，${canBack ? `建議先退 ${n} 階暖身。` : "從這裡繼續就好。"}</span>
+        <div class="row">${canBack ? `<button class="btn" id="wbBack" data-n="${n}" type="button">退 ${n} 階再開始</button>` : ""}<button class="btn ${canBack ? "ghost" : ""}" id="wbContinue" type="button">從這階繼續</button></div></section>`);
+    }
+
+    // Maintenance: catch a rebound early (only counting days after the last reset point).
+    if (st.done) {
+      const since = [S.stepBackDay, S.reachedDay].filter(Boolean).sort().pop();
+      const recent = logKeys.filter(k => daysBetween(k, day) < 7 && (!since || k > since)).map(k => S.logs[k]);
+      const late = recent.filter(e => e.wakeR === "late").length;
+      if (late >= 3) parts.push(`<section class="notice hold"><b>作息有點回彈了</b><span>最近有 ${late} 天起床晚超過 30 分。先退回兩階，再慢慢拉回來，會比硬撐輕鬆。</span>
+        <div class="row"><button class="btn ghost" id="rebound" type="button">退回兩階</button></div></section>`);
+    }
+
+    // Achievement card.
+    if (st.done && S.reachedDay && daysBetween(S.reachedDay, day) <= 3 && !S.trophyDismissed) {
+      const days = daysBetween(S.startDay, S.reachedDay) + 1;
+      const share = `我用「作息回正」花了 ${days} 天，從 ${fmt(S.origin.bed)} 睡、${fmt(S.origin.wake)} 起，調到 ${fmt(S.tgt.bed)} 睡、${fmt(S.tgt.wake)} 起。一次只調 ${stepOf()} 分鐘，不用註冊。想試的話跟我要連結！`;
+      parts.push(`<section class="card trophy">
+        <span class="eyebrow">到達目標</span>
+        <p class="big">${days} 天，從 <span class="time">${fmt(S.origin.bed)}</span> 到 <span class="time">${fmt(S.tgt.bed)}</span></p>
+        <p class="muted">接下來每天維持同樣的時間，這個作息就會變成你的日常。可以截圖留念，或把下面這段傳給朋友。</p>
+        <textarea id="shareText" aria-label="分享文字">${esc(share)}</textarea>
+        <div class="row"><button class="btn" id="copyShare" type="button">複製分享文字</button><button class="btn quiet" id="hideTrophy" type="button">收起</button><span class="small muted" id="shareMsg" role="status"></span></div>
+      </section>`);
+    }
+
+    const items = scheduleFor(snap.wake, S.pos.bed);
+    const nx = nextUp(items, now.rel);
+    const expanded = inBed(S.pos) - inBed(S.origin) >= 60 || inBed(S.pos) > 510;
+
+    const hero = `
+      <section class="card">
+        <div class="row between">
+          <span class="eyebrow">第 ${dayN} 天 · ${shortDate(day)}（${weekday(day)}）</span>
+          ${st.done ? `<span class="pill ok">已到達目標 · 維持期</span>` : `<span class="pill info">階段 ${st.cur}/${st.of}</span>`}
+        </div>
+        <div class="tonight">
+          <div style="display:grid;gap:14px;min-width:0">
+            <div class="big-times">
+              <div class="t bed"><span class="small muted">今晚最早上床</span><b>${fmt(S.pos.bed)}</b></div>
+              <div class="t wake"><span class="small muted">明早起床</span><b>${fmt(S.pos.wake)}</b></div>
+            </div>
+            <div style="display:grid;gap:6px">
+              <div class="meter" aria-hidden="true"><i style="width:${pct()}%"></i></div>
+              <p class="small muted">${needCheckin && !log ? "回報昨晚之後，這裡會更新成今晚的時間。" :
+                st.done ? "已經在目標時間了。每天維持同樣的時間，作息才會穩。" :
+                `距離目標：${S.pos.bed === S.tgt.bed ? "上床已到目標" : `上床還差 <b class="time">${dur(S.pos.bed - S.tgt.bed)}</b>`}，${S.pos.wake === S.tgt.wake ? "起床已到目標" : `起床還差 <b class="time">${dur(S.pos.wake - S.tgt.wake)}</b>`}。`}</p>
+            </div>
+          </div>
+          <div class="dial-wrap">${dialSVG(S.pos, S.tgt)}</div>
+        </div>
+        ${isStart ? `<p class="small muted">今天是第一天：今晚照平常的時間睡，明天早上起床後回來回報，計畫就會開始往前。</p>` :
+          expanded ? `<p class="small muted">起床時間是固定的錨點，上床時間是「最早」：沒睡意就晚點上床，不要躺著等。</p>` : ""}
+      </section>`;
+
+    const timeline = `
+      <section class="card">
+        <div class="row between"><h2>${now.evening ? "今晚的時間表" : "今天的時間表"}</h2><span class="small muted">做到就點一下</span></div>
+        <ol class="timeline">
+          ${items.map(it => `
+            <li class="${ticks[it.id] ? "done" : ""} ${it.id === nx.id ? "is-next" : ""}">
+              <label class="tl" for="tick-${it.id}">
+                <input type="checkbox" id="tick-${it.id}" data-tick="${it.id}" ${ticks[it.id] ? "checked" : ""}>
+                <span class="when ${it.am ? "am" : "pm"}">${fmt(it.t)}</span>
+                <span class="what"><b>${it.title}</b><br><span class="small muted">${it.note}</span></span>
+              </label>
+            </li>`).join("")}
+        </ol>
+      </section>`;
+
+    const misses = runOf(e => e.result === "miss", S.stepBackDay);
+    const stepBack = (!st.done && gap(S.pos, S.origin) > 0 && misses >= 3) ? `
+      <section class="notice hold"><b>連續 ${misses} 天起床晚了</b><span>這個速度可能太快。退回上一階，或到「計畫」頁換成溫和速度，目前的進度都會保留。</span>
+        <div class="row"><button class="btn ghost" id="stepBack" type="button">退回上一階</button></div></section>` : "";
+
+    const sinceBackup = daysBetween(S.lastBackupDay || S.startDay, day);
+    const backupNudge = (sinceBackup >= 7 && logKeys.length >= 3) ? `
+      <section class="notice info"><span>已經 ${sinceBackup} 天沒備份。有些瀏覽器（例如 iPhone 的 Safari）會清掉太久沒打開的網站資料。</span>
+        <div class="row"><button class="btn ghost" id="goBackup" type="button">去複製備份碼</button></div></section>` : "";
+
+    const checkin = needCheckin ? renderCheckin(log) : "";
+    if (needCheckin && !now.evening) parts.push(checkin, hero, nx.html, stepBack, timeline);
+    else parts.push(nx.html, hero, checkin, stepBack, timeline);
+    if (log && !editing) parts.push(renderLogged(log));
+    parts.push(backupNudge);
+    return parts.join("");
+  }
+
+  function renderCheckin(log) {
+    const plan = log ? { bed: log.planBed, wake: log.planWake } : S.pos;
+    const opt = (name, list, disabled) => list.map(([k, t, sub]) => `<button type="button" class="${k === "late" ? "miss" : ""}" data-${name}="${k}" aria-pressed="${draft[name] === k}" ${disabled ? "disabled" : ""}>${t}${sub ? `<small class="muted">${sub}</small>` : ""}</button>`).join("");
+    return `
+      <section class="card" id="checkin">
+        <div class="row between"><h2>昨晚怎麼樣？</h2>${log ? `<button type="button" class="btn quiet" id="cancelEdit">取消</button>` : ""}</div>
+        <p class="small muted">計畫是 <span class="time">${fmt(plan.bed)}</span> 後上床、今天 <span class="time">${fmt(plan.wake)}</span> 起床。點兩下就完成。</p>
+        <div class="field"><span class="lbl" id="lblWake">1. 今天起床</span><div class="choices" role="group" aria-labelledby="lblWake">${opt("wake", WAKE_OPTS, false)}</div></div>
+        <div class="field"><span class="lbl" id="lblSleep">2. 昨晚入睡</span><div class="choices" role="group" aria-labelledby="lblSleep">${opt("sleep", SLEEP_OPTS, !draft.wake)}</div></div>
+      </section>`;
+  }
+
+  function renderLogged(log) {
+    const r = RESULT[log.result];
+    const w = WAKE_OPTS.find(o => o[0] === log.wakeR), sl = SLEEP_OPTS.find(o => o[0] === log.sleepR);
+    return `
+      <section class="card">
+        <div class="row between"><h3>今天已回報</h3><span class="pill ${r[0]}">${r[1]}</span></div>
+        <p class="small muted">起床：${w ? `${w[1]}（${w[2]}）` : "—"} · 入睡：${sl ? `${sl[1]}（${sl[2]}）` : "—"}</p>
+        <div><button class="btn quiet" id="editCheckin" type="button">修改回報</button></div>
+      </section>`;
+  }
+
+  function submitCheckin() {
+    pendingSubmit = null;
+    if (!draft.wake || !draft.sleep) return;
+    const day = nowInfo().day;
+    const snapshot = JSON.stringify(S);
+    const existing = S.logs[day];
+    if (existing) Object.assign(S, JSON.parse(JSON.stringify(existing.before)));
+    const before = { pos: { ...S.pos }, progress: S.progress, reachedDay: S.reachedDay, trophyDismissed: S.trophyDismissed };
+    const plan = { ...S.pos };
+    const result = draft.wake === "late" ? "miss" : (draft.wake === "ontime" && draft.sleep === "fast" ? "ok" : "hold");
+    S.logs[day] = { wakeR: draft.wake, sleepR: draft.sleep, result, planBed: plan.bed, planWake: plan.wake, before };
+    let msg;
+    if (result === "ok") {
+      if (stage().done) msg = { kind: "ok", text: "維持得很好，目標時間已經是你的日常了。" };
+      else {
+        S.progress += 1;
+        if (S.progress >= PACES[S.pace].days) {
+          advance(); S.progress = 0;
+          const reached = stage().done;
+          if (reached) { S.reachedDay = day; S.trophyDismissed = false; }
+          msg = { kind: "ok", text: `${reached ? "到達目標了！" : "做得好！今晚往前一步："}<b class="time">${fmt(S.pos.bed)}</b> 後上床、明早 <b class="time">${fmt(S.pos.wake)}</b> 起床。` };
+        } else msg = { kind: "ok", text: "有跟上！溫和速度每 2 天前進一步，今晚維持同樣時間。" };
+      }
+    } else if (result === "hold") {
+      msg = { kind: "hold", text: draft.wake !== "ontime"
+        ? "差一點就準時了。今晚停在原地，明天試著準時起床。"
+        : draft.sleep === "slow" ? "起床有準時，很好。入睡慢代表身體還在適應，今晚停在原地，沒睡意可以晚點上床。"
+        : "起床有準時，很好。如果是還沒睡意才晚點上床，這樣做是對的；先停在原地。" };
+    } else {
+      S.progress = 0;
+      msg = { kind: "miss", text: `今天起晚了，沒關係。今晚停在原地（<b class="time">${fmt(S.pos.bed)}</b> 後上床），站穩了再往前。` };
+    }
+    save();
+    undo = { state: snapshot, until: Date.now() + 5000, draft: { ...draft } };
+    editing = false; draft = { wake: null, sleep: null }; flash = msg;
+    render(); window.scrollTo(0, 0);
+    startUndoTimer();
+  }
+
+  function startUndoTimer() {
+    if (undoTimer) clearInterval(undoTimer);
+    undoTimer = setInterval(() => {
+      const sec = $("#undoSec");
+      const left = undo ? Math.ceil((undo.until - Date.now()) / 1000) : 0;
+      if (!sec || left <= 0) { clearInterval(undoTimer); undoTimer = null; const b = $("#undoBtn"); if (b) b.parentElement.remove(); if (left <= 0) undo = null; return; }
+      sec.textContent = left;
+    }, 250);
+  }
+
+  function stepBackBy(n, text) {
+    const day = nowInfo().day;
+    retreat(n); S.progress = 0; S.stepBackDay = day;
+    // If today's report is edited later, start from the stepped-back position.
+    if (S.logs[day]) S.logs[day].before = { pos: { ...S.pos }, progress: 0, reachedDay: S.reachedDay, trophyDismissed: S.trophyDismissed };
+    save(); flash = { kind: "info", text }; render(); window.scrollTo(0, 0);
+  }
+
+  /* ----- plan ----- */
+  function renderPlan() {
+    const day = nowInfo().day, p = PACES[S.pace], step = p.step;
+    const reportedToday = !!S.logs[day] || day === S.startDay;
+    const rows = [`<tr class="past"><td>起點</td><td>${shortDate(S.startDay)}</td><td class="time">${fmt(S.origin.bed)}</td><td class="time">${fmt(S.origin.wake)}</td><td class="time">${dur(inBed(S.origin))}</td></tr>`];
+    let q = { ...S.pos }, k = 0;
+    rows.push(`<tr class="current"><td>目前</td><td>今晚</td><td class="time">${fmt(q.bed)}</td><td class="time">${fmt(q.wake)}</td><td class="time">${dur(inBed(q))}</td></tr>`);
+    while (gap(q, S.tgt) > 0 && k < 200) {
+      k++;
+      q = { bed: toward(q.bed, S.tgt.bed, step), wake: toward(q.wake, S.tgt.wake, step) };
+      const off = Math.max(0, k * p.days - S.progress - (reportedToday ? 0 : 1));
+      const d = addDays(day, off);
+      rows.push(`<tr><td>${gap(q, S.tgt) ? "+" + k : "目標"}</td><td>${shortDate(d)}（${weekday(d)}）開始</td><td class="time">${fmt(q.bed)}</td><td class="time">${fmt(q.wake)}</td><td class="time">${dur(inBed(q))}</td></tr>`);
+    }
+    const reset = confirmReset ? `
+      <div class="confirm" role="alertdialog" aria-labelledby="cfm">
+        <p id="cfm">確定要刪除這台裝置上的計畫和所有紀錄嗎？刪除後無法復原。</p>
+        <div class="row"><button class="btn danger" id="doReset" type="button">刪除全部</button><button class="btn quiet" id="noReset" type="button">取消</button></div>
+      </div>` : `<button class="btn danger" id="askReset" type="button">清除所有資料</button>`;
+    return `
+      <section class="card">
+        <h2>調整速度</h2>
+        <p class="small muted">換速度只會改變之後每一步的大小，你目前的時間（<span class="time">${fmt(S.pos.bed)}</span> 上床）和進度都不變。</p>
+        ${paceRadios("setpace", S.pace)}
+      </section>
+      <section class="card">
+        <div class="row between"><h2>接下來的每一步</h2><span class="pill info">還有 ${k} 步</span></div>
+        <p class="small muted">日期是預估。起床晚了或入睡還不順，就會在原地多停幾天。</p>
+        <div class="scroll"><table>
+          <thead><tr><th>步</th><th>日期</th><th>上床</th><th>起床</th><th>在床時間</th></tr></thead>
+          <tbody>${rows.join("")}</tbody>
+        </table></div>
+      </section>
+      <section class="card">
+        <h2>其他設定</h2>
+        <div class="row">
+          <button class="btn ghost" id="toSetup" type="button">修改時間或目標</button>
+          ${reset}
+        </div>
+      </section>`;
+  }
+
+  /* ----- log ----- */
+  function chartSVG(entries, sample) {
+    // A narrow viewBox keeps the 12px labels readable when the chart is squeezed to phone width.
+    const W = 360, H = 220, padL = 44, padR = 8, padT = 20, padB = 28;
+    const vals = entries.map(e => e.planBed).concat([S.tgt.bed]);
+    let y0 = Math.floor((Math.min(...vals) - 30) / 60) * 60, y1 = Math.ceil((Math.max(...vals) + 30) / 60) * 60;
+    if (y1 - y0 < 120) y1 = y0 + 120;
+    const Y = m => padT + ((m - y0) / (y1 - y0)) * (H - padT - padB);
+    const n = Math.max(entries.length, 7);
+    const step = (W - padL - padR) / n;
+    const X = k => padL + step * (k + 0.5);
+    const every = entries.length > 7 ? 2 : 1;
+    const grid = [];
+    for (let m = y0; m <= y1; m += 60) grid.push(`<line x1="${padL}" x2="${W - padR}" y1="${Y(m)}" y2="${Y(m)}" stroke="var(--line)"/><text x="${padL - 8}" y="${Y(m) + 4}" text-anchor="end" font-size="12" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${fmt(m)}</text>`);
+    const target = `<line x1="${padL}" x2="${W - padR}" y1="${Y(S.tgt.bed)}" y2="${Y(S.tgt.bed)}" stroke="var(--dawn)" stroke-width="2" stroke-dasharray="5 4"/><text x="${W - padR}" y="${Y(S.tgt.bed) - 6}" text-anchor="end" font-size="12" fill="var(--dawn)" font-family="Noto Sans TC, sans-serif">目標 ${fmt(S.tgt.bed)}</text>`;
+    const path = entries.map((e, k) => `${k ? "L" : "M"}${X(k).toFixed(1)} ${Y(e.planBed).toFixed(1)}`).join(" ");
+    const color = r => r === "ok" ? "var(--ok)" : r === "hold" ? "var(--warn)" : "var(--miss)";
+    const dots = entries.map((e, k) => `<circle cx="${X(k).toFixed(1)}" cy="${Y(e.planBed).toFixed(1)}" r="5.5" fill="${color(e.result)}" stroke="var(--surface)" stroke-width="2"/>
+      ${(entries.length - 1 - k) % every === 0 ? `<text x="${X(k).toFixed(1)}" y="${H - 10}" text-anchor="middle" font-size="12" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${e.label}</text>` : ""}`).join("");
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="每天計畫上床時間與回報結果" style="opacity:${sample ? .6 : 1}">${grid.join("")}${target}<path d="${path}" fill="none" stroke="var(--night)" stroke-width="2.5"/>${dots}</svg>`;
+  }
+
+  function renderLog() {
+    const day = nowInfo().day;
+    const keys = Object.keys(S.logs).sort();
+    let entries, sample = false;
+    if (keys.length) entries = keys.slice(-14).map(k => Object.assign({ label: shortDate(k) }, S.logs[k]));
+    else {
+      sample = true;
+      let q = { ...S.origin };
+      entries = ["ok", "ok", "hold", "ok", "miss", "ok", "ok"].map((r, d) => {
+        const e = { label: `第${d + 2}天`, planBed: q.bed, result: r };
+        if (r === "ok") q = { bed: toward(q.bed, S.tgt.bed, stepOf()), wake: q.wake };
+        return e;
+      });
+    }
+    const last7 = keys.filter(k => daysBetween(k, day) < 7).map(k => S.logs[k]);
+    const onTime = last7.filter(e => e.wakeR === "ontime").length;
+    const st = stage();
+    let backup = "";
+    try { backup = btoa(unescape(encodeURIComponent(JSON.stringify(S)))); } catch (e) {}
+    const rows = keys.slice(-7).reverse().map(k => {
+      const e = S.logs[k], w = WAKE_OPTS.find(o => o[0] === e.wakeR), sl = SLEEP_OPTS.find(o => o[0] === e.sleepR), r = RESULT[e.result];
+      return `<tr><td>${shortDate(k)}（${weekday(k)}）</td><td class="time">${fmt(e.planBed)}</td><td>${w ? w[1] : "—"}</td><td>${sl ? sl[1] : "—"}</td><td><span class="pill ${r[0]}">${r[1]}</span></td></tr>`;
+    }).join("");
+    return `
+      <section class="card">
+        <h2>目前狀況</h2>
+        <div class="stats">
+          <div class="stat"><span class="small muted">連續準時起床</span><b>${runOf(e => e.wakeR === "ontime")} 天</b></div>
+          <div class="stat"><span class="small muted">近 7 天準時</span><b>${last7.length ? onTime + "/" + last7.length : "—"}</b></div>
+          <div class="stat"><span class="small muted">階段</span><b>${st.cur}/${st.of}</b></div>
+          <div class="stat"><span class="small muted">已回報</span><b>${keys.length} 天</b></div>
+        </div>
+      </section>
+      <section class="card chart">
+        <div class="row between"><h2>上床時間進度</h2>${sample ? `<span class="pill hold">範例</span>` : ""}</div>
+        <p class="small muted">${sample ? "這是示意圖，開始回報後會換成你的資料。" : "線是每晚計畫的上床時間，點的顏色是那天的回報結果。"}</p>
+        ${chartSVG(entries, sample)}
+        <div class="legend"><span><i style="background:var(--ok)"></i>前進</span><span><i style="background:var(--warn)"></i>原地</span><span><i style="background:var(--miss)"></i>原地 · 起晚了</span></div>
+      </section>
+      ${rows ? `<section class="card"><h2>最近紀錄</h2><div class="scroll"><table><thead><tr><th>日期</th><th>計畫上床</th><th>起床</th><th>入睡</th><th>結果</th></tr></thead><tbody>${rows}</tbody></table></div></section>` : ""}
+      <section class="card" id="backupCard">
+        <h2>備份與換手機</h2>
+        <p class="small muted">資料只存在這個瀏覽器裡。複製備份碼存到記事本或傳給自己；換裝置時，用新裝置打開同一個連結，在第一頁點「從舊手機搬過來？」貼上即可。</p>
+        <textarea id="backupOut" aria-label="備份碼">${backup}</textarea>
+        <div class="row"><button class="btn" id="copyBackup" type="button">複製備份碼</button><span class="small muted" id="copyMsg" role="status"></span></div>
+        ${restoreBlock()}
+      </section>`;
+  }
+
+  /* ----- guide ----- */
+  function renderGuide() {
+    const items = [
+      ["漸進式調整", "生理時鐘一天只能穩定地撥動 15–30 分鐘。一次跳太多，身體會像時差一樣抗拒，睡不著反而更挫折。所以這裡每次只調一小步，跟上了才往前。"],
+      ["起床是錨點，上床是最早時間", "起床時間每天固定，就算前一晚很晚才睡著也照時間起，當天晚上自然會比較早有睡意。上床時間是「最早可以上床」的時間：沒睡意就晚點上床。調整期間週末也照常起床；到達目標後的維持期，週末最多晚 1 小時。睡不夠的那幾天白天會比較睏，覺得想睡就不要開車或騎車。"],
+      ["早上曬太陽", "起床後 1 小時內接觸 20–30 分鐘的戶外光，是把時鐘往前撥最有效的方法。陰天戶外的光也比室內亮好幾倍；隔著窗戶效果差很多。（如果你是要把作息往後調，做法相反：早上避光、傍晚曬光。）"],
+      ["晚上避開亮光", "晚上的光（尤其是螢幕）會把時鐘往後推。睡前 2 小時調暗燈光，睡前 45 分鐘放下手機。"],
+      ["咖啡因與小睡", "咖啡因的半衰期約 5 小時，睡前 8 小時之後就別喝了。白天想睡可以小睡，但在同一個截止時間之前、20 分鐘以內。"],
+      ["床只用來睡覺（刺激控制）", "這是失眠認知行為治療（CBT-I）的核心。躺 20 分鐘還睡不著就起床，到昏暗的地方做無聊放鬆的事，有睡意再回床上。讓大腦重新把床跟「睡著」連在一起。"],
+      ["怎麼決定要不要往前", "只有「準時起床」又「30 分內睡著」才前進一步。入睡要超過 30 分鐘，代表身體的時鐘還沒跟上，硬往前推只會讓你躺在床上更久。起床晚超過 30 分鐘，就先停在原地。"],
+      ["在床 9 小時太長嗎", "23:00 到 08:00 是 9 小時，多數成人睡 7–8 小時就夠。長時間醒著躺在床上，反而容易變成失眠。所以 23:00 是「最早」上床時間，不是一定要躺下的時間。"],
+      ["關於褪黑激素", "低劑量褪黑激素在睡前幾小時服用，可以幫助時鐘往前撥。但在台灣屬於處方藥，劑量和時間點要由醫師評估，請不要自行購買服用。"],
+      ["什麼時候該看醫生", "失眠超過 3 個月、每週 3 天以上；家人說你打鼾很大聲或睡覺時會停止呼吸；白天嚴重嗜睡影響開車或工作；作息天天往後飄、怎麼調都拉不回來；或情緒長期低落。這些情況請找睡眠專科或身心科。"]
+    ];
+    return `
+      <section class="card guide">
+        <h2>這個計畫用到的方法</h2>
+        ${items.map(([h, p]) => `<article><h3>${h}</h3><p class="muted">${p}</p></article>`).join("")}
+      </section>
+      <p class="small muted">本工具提供一般睡眠衛教資訊，不能取代醫師的診斷與治療。</p>`;
+  }
+
+  /* ---------- events ---------- */
+  function copyText(ta, msgEl, okText) {
+    const fallback = () => { ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length); msgEl.textContent = "已選取，請用「拷貝」複製"; };
+    try { navigator.clipboard.writeText(ta.value).then(() => { msgEl.textContent = okText; }, fallback); }
+    catch (e) { fallback(); }
+  }
+
+  function bindRestore() {
+    const rs = $("#restore");
+    if (rs) rs.addEventListener("click", () => {
+      let data = null;
+      try { data = JSON.parse(decodeURIComponent(escape(atob($("#backupIn").value.trim())))); } catch (e) {}
+      if (!valid(data)) { $("#restoreMsg").textContent = "這段備份碼無法讀取，請確認有完整貼上。"; return; }
+      data.ticks = data.ticks || {}; data.snaps = data.snaps || {};
+      if (S) { confirmRestore = data; render(); return; }
+      S = data; save(); view = "today"; flash = { kind: "ok", text: "已從備份碼還原。" }; render(); window.scrollTo(0, 0);
+    });
+    const dr = $("#doRestore");
+    if (dr) dr.addEventListener("click", () => { S = confirmRestore; confirmRestore = null; save(); view = "today"; flash = { kind: "ok", text: "已從備份碼還原。" }; render(); window.scrollTo(0, 0); });
+    const nr = $("#noRestore");
+    if (nr) nr.addEventListener("click", () => { confirmRestore = null; render(); });
+  }
+
+  function bindView() {
+    const day = nowInfo().day;
+    const ck = $("#checkin");
+    if (ck) {
+      ck.querySelectorAll("[data-wake],[data-sleep]").forEach(b => b.addEventListener("click", () => {
+        // Ignore taps that land right after a re-render or right after the first pick (accidental double taps).
+        if (performance.now() - renderedAt < 300) return;
+        const name = b.dataset.wake ? "wake" : "sleep";
+        if (name === "sleep" && performance.now() - lastPick < 300) return;
+        draft[name] = b.dataset[name]; lastPick = performance.now();
+        ck.querySelectorAll(`[data-${name}]`).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+        if (name === "wake") ck.querySelectorAll("[data-sleep]").forEach(x => { x.disabled = false; });
+        if (draft.wake && draft.sleep) { clearTimeout(pendingSubmit); pendingSubmit = setTimeout(submitCheckin, 180); }
+      }));
+      const c = $("#cancelEdit"); if (c) c.addEventListener("click", () => { editing = false; draft = { wake: null, sleep: null }; render(); });
+    }
+    const on = (id, fn) => { const el = $("#" + id); if (el) el.addEventListener("click", fn); };
+    on("editCheckin", () => { editing = true; const l = S.logs[day]; draft = { wake: l.wakeR, sleep: null }; render(); });
+    on("undoBtn", () => {
+      if (!undo) return;
+      S = JSON.parse(undo.state); save();
+      const d = undo.draft; undo = null; editing = !!S.logs[day]; draft = { wake: d.wake, sleep: null };
+      flash = { kind: "info", text: "已復原，請重新選擇。" }; render();
+    });
+    document.querySelectorAll("[data-tick]").forEach(cb => cb.addEventListener("change", () => {
+      S.ticks[day] = S.ticks[day] || {};
+      S.ticks[day][cb.dataset.tick] = cb.checked;
+      Object.keys(S.ticks).sort().slice(0, -14).forEach(k => delete S.ticks[k]);
+      save();
+      cb.closest("li").classList.toggle("done", cb.checked);
+    }));
+    on("stepBack", () => stepBackBy(1, "已退回上一階。先把這個時間站穩。"));
+    on("rebound", () => stepBackBy(2, "已退回兩階。照這個時間維持幾天，再慢慢拉回目標。"));
+    on("wbContinue", () => { S.welcomeDismissed = day; save(); render(); });
+    on("wbBack", e => { const n = Number(e.currentTarget.dataset.n) || 1; S.welcomeDismissed = day; stepBackBy(n, `已退 ${n} 階，今晚從這裡重新開始。`); });
+    on("hideTrophy", () => { S.trophyDismissed = true; save(); render(); });
+    on("copyShare", () => copyText($("#shareText"), $("#shareMsg"), "已複製，貼給朋友吧"));
+    on("goBackup", () => { view = "log"; render(); const b = $("#backupCard"); if (b) b.scrollIntoView(); });
+    on("toSetup", () => { view = "setup"; render(); window.scrollTo(0, 0); });
+    on("askReset", () => { confirmReset = true; render(); });
+    on("noReset", () => { confirmReset = false; render(); });
+    on("doReset", () => { try { localStorage.removeItem(KEY); } catch (e) {} S = null; confirmReset = false; view = "today"; render(); window.scrollTo(0, 0); });
+    on("copyBackup", () => { S.lastBackupDay = day; save(); copyText($("#backupOut"), $("#copyMsg"), "已複製。存到記事本或傳給自己。"); });
+    document.querySelectorAll('input[name="setpace"]').forEach(r => r.addEventListener("change", () => {
+      S.pace = r.value; S.progress = 0; save();
+      flash = { kind: "ok", text: `已改成${PACES[r.value].label}速度（${PACES[r.value].desc.replace("（推薦）", "")}），從 <b class="time">${fmt(S.pos.bed)}</b> 繼續。` };
+      view = "today"; render(); window.scrollTo(0, 0);
+    }));
+    bindRestore();
+
+    // Keep the countdown fresh while the page stays open.
+    if (view === "today" && $("#nextBox")) {
+      ticker = setInterval(() => { if (nowInfo().day !== day) render(); else refreshNext(); }, 30000);
+    }
+  }
+
+  function refreshNext() {
+    const box = $("#nextBox"); if (!box || !S) return;
+    const now = nowInfo();
+    const nx = nextUp(scheduleFor(snapFor(now.day).wake, S.pos.bed), now.rel);
+    box.outerHTML = nx.html;
+    document.querySelectorAll("ol.timeline li").forEach(li => {
+      const cb = li.querySelector("[data-tick]");
+      li.classList.toggle("is-next", !!cb && cb.dataset.tick === nx.id);
+    });
+  }
+
+  const tabs = $("#tabs");
+  const go = v => { view = v; editing = false; confirmReset = false; confirmRestore = null; render(); window.scrollTo(0, 0); $("#tab-" + v).focus(); };
+  tabs.addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (b) go(b.dataset.view); });
+  tabs.addEventListener("keydown", e => {
+    const order = ["today", "plan", "log", "guide"];
+    const i = order.indexOf(view);
+    if (e.key === "ArrowRight") { e.preventDefault(); go(order[(i + 1) % 4]); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); go(order[(i + 3) % 4]); }
+  });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && S && view === "today" && !$("#checkin")) render(); });
+
+  const h = (location.hash || "").slice(1);
+  if (["today", "plan", "log", "guide"].includes(h)) view = h;
+  S = load();
+  render();
+})();
+</script>
+</body>
+</html>
