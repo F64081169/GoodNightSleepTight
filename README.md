@@ -63,7 +63,7 @@ You can switch pace at any time without losing progress.
 - **Tonight at a glance.** Tonight's earliest bedtime and tomorrow's wake time in big type, plus a 24-hour dial showing your sleep window against the goal.
 - **Daily timeline.** Wake, morning light, breakfast, caffeine/nap cutoff, exercise cutoff, dim the lights, wind down, bed. Every time is calculated from tonight's plan. Tap an item to tick it off.
 - **"Next up" countdown.** There are no push notifications, so the top of the page always shows the next thing to do and how long until it.
-- **Two-tap morning check-in.** Pick a wake-up answer, then a sleep answer, and it submits on its own. You get a 5-second undo, and you can edit the answer later that day.
+- **Two-tap morning check-in.** Pick a wake-up answer, then a sleep answer, and it submits on its own. You get a 5-second undo, and you can edit the answer later that day. Prefer exact times? Switch to manual entry and type when you went to bed, fell asleep and woke up. The app applies the same rules and shows the verdict before you submit.
 - **A "sleep day" that matches night owls.** The day rolls over 3 hours before your planned wake time, so opening the app at 00:30 still shows *tonight*, not tomorrow.
 - **Forgiving by design.** Three late mornings in a row suggest stepping back one stage. After a break of 3 or more days you get a "welcome back" card that suggests warming up again. After you reach the goal, the app watches for your schedule creeping late again.
 - **Safety checks.** It warns about likely AM/PM mix-ups on 12-hour phones, flags daytime sleep schedules (often shift work, which this plan doesn't suit), and points you to a sleep specialist when the gap is very large. It also reminds you not to drive when drowsy.
